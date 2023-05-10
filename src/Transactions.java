@@ -1,3 +1,4 @@
+import java.io.IOException;
 import java.sql.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -25,6 +26,8 @@ public class Transactions {
                 }
             }
             System.out.print("Username does not exists");
+            System.out.println("\npress Enter to continue");
+            scanner.nextLine();
             return 0;
         } else {
             System.out.print("Enter password: ");
@@ -120,7 +123,7 @@ public class Transactions {
     }
 
     //////////////////////////////////////////////////////////////////////////////////////
-    static void createBooking(Connection connection) throws SQLException {
+    static void createBooking(Connection connection) throws SQLException, IOException {
         // Take input from the user for tripId, riderId, and numSeats
         if (isTripListEmpty(connection)) {
             System.out.println("No trip is Registered. Try again later");
@@ -140,7 +143,6 @@ public class Transactions {
                 System.out.println("Invalid input, please enter a valid integer");
             }
         }
-        scanner.nextLine();
         System.out.print("Enter date (YYYY-MM-DD, e.g. 2023-05-05): ");
         try {
             String input = scanner.nextLine();
@@ -162,6 +164,7 @@ public class Transactions {
             Booking book = new Booking(tripId, username, numSeats);
             book.save(connection);
             Trip.updateSeats(connection, tripId, numSeats, false);
+            Booking.writeBookingDetailsToFile(connection, username,Booking.getBookingid(connection));
             }
         }
         } catch (DateTimeParseException e) {
@@ -204,22 +207,26 @@ public class Transactions {
         }
         Booking.displayByUsername(connection, username);
         System.out.println();
-        System.out.println("Enter the trip id");
-        int tripId;
+        System.out.println("Enter the booking id");
+        int bookingid;
         while (true) {
             try {
-                tripId = Integer.parseInt(scanner.nextLine());
+                bookingid = Integer.parseInt(scanner.nextLine());
                 break;
             } catch (NumberFormatException e) {
-                System.out.println("Invalid input, please enter a valid integer for the trip ID");
+                System.out.println("Invalid input, please enter a valid integer for the booking ID");
             }
         }
 
-        Booking.cancelBooking(connection, tripId);
-        if (Booking.doesBookingExist(connection, tripId)) {
-            Booking.cancelBooking(connection, tripId);
-            int numseat = Booking.getNumSeatsByTripId(connection, tripId);
-            Trip.updateSeats(connection, tripId, numseat, true);
+        if (Booking.doesBookingExist(connection, bookingid)) {
+            Booking.cancelBooking(connection, bookingid);
+            int z = Booking.getNumTripIdByBookingid(connection, bookingid);
+            if(z!=0){
+            int numseat = Booking.getNumSeatsByTripId(connection,z);
+            Trip.updateSeats(connection, z, numseat, true);
+            }else{
+                System.out.println("Invalid input booking ID");
+            }
         }
     }
 
